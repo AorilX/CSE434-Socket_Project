@@ -1,8 +1,8 @@
 import socket
 
-serverAddressPort = ("127.0.0.1", 9001)
+serverAddressPort = ("127.0.0.1", 48000)
 
-bufferSize = 1024
+bufferSize = 2048
 
 # Create a UDP socket at client side
 
