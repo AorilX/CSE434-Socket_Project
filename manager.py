@@ -2,7 +2,7 @@ import socket
 import itertools
 import random
 
-from pyrsistent import discard
+#from pyrsistent import discard
 
 localIP = "127.0.0.1"
 #48000~48499
@@ -130,8 +130,14 @@ def startGame(user, k):
 
         game_identifier = ''
         game_identifier = 'game_' + user
-        print(game_identifier)
-        print(thePlayer)
+        
+
+        result_string = "\nGame_identifier: " + game_identifier
+        result_string += "\nDealer: " + thePlayer[0]
+        result_string += "\nPlayers: " 
+        for player1 in thePlayer:
+            result_string += player1 + " "
+        print(result_string)
 
         vals = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A']
         suits = ['S', 'C', 'H', 'D']
@@ -194,9 +200,23 @@ def startGame(user, k):
         theGame.insert(0, game_identifier)
 
         game_list.append(theGame)
-        print(player_cards)
+        #print(player_cards)
 
-        result_string = "\n"
+        result_string = ""
+        result_string += "\nGame_identifier: " + game_identifier
+        result_string += "\nDealer: " + thePlayer[0]
+        result_string += "\nPlayers: " 
+        for player1 in thePlayer:
+            result_string += player1 + " "
+        result_string += "\n"
+
+        #the table
+        result_string += "User:   IP:        port:\n"
+        for player2 in thePlayer:
+            i = user_list.index(player2)
+            result_string += player[i][0] + "       " + player[i][1] + "  " + str(player[i][2]) + "\n"
+        
+        #print cards
         for user1 in thePlayer:
                 user_index = theGame[1].index(user1)
                 result_string = result_string + user1 + "\n1   2   3   \n" + user_view[user_index*6] + " " + user_view[user_index*6 + 1] + " " + user_view[user_index*6+2]
@@ -273,6 +293,49 @@ def playGame(user, game_identifier, num, choice):
                 card_list[2] = deck
                 card_list[3] = user_view
                 card_list[4] = back_count
+            
+            #input 36user
+            elif choice == "S":
+                
+                card_index_1 = int(num[0]) #1
+                card_index_2 = int(num[1]) #2
+                #first card
+                #b1
+                temp_card_str = player_cards[user_index*6 + card_index_1-1]
+                
+                user_1 = user
+                #user to be stolen
+                user_2 = num[2:]
+                user2_index = theGame[1].index(user_2)
+
+                #switch cards
+                player_cards[user_index*6 + card_index_1-1] = player_cards[user2_index*6 + card_index_2-1]
+                player_cards[user2_index*6 + card_index_2-1] = temp_card_str
+
+                #previes info shwon to players
+                the_str_1 = user_view[user_index*6 + card_index_1-1]
+                the_str_2 = user_view[user2_index*6 + card_index_2-1]
+
+                #turn up the cards
+                user_view[user_index*6 + card_index_1-1] = player_cards[user_index*6 + card_index_1-1]
+                user_view[user2_index*6 + card_index_2-1] = player_cards[user2_index*6 + card_index_2-1]
+                
+                
+
+
+                if the_str_1 == "***":
+                    back_count[user_index] = back_count[user_index] + 1
+                    #game ends and calculate scores
+                
+                if the_str_2 == "***":
+                    back_count[user2_index] = back_count[user2_index] + 1
+                    #game ends and calculate scores
+
+                card_list[0] = player_cards
+                card_list[1] = discard
+                card_list[2] = deck
+                card_list[3] = user_view
+                card_list[4] = back_count
 
             else:
                 user_view[user_index*6 + int(num)-1] = player_cards[user_index*6 + int(num)-1]
@@ -297,9 +360,18 @@ def playGame(user, game_identifier, num, choice):
             game_list[i][2] = card_list
 
             user_index = theGame[1].index(user)
-            print(back_count[user_index])
+            #print(back_count[user_index])
 
             if back_count[user_index] == 6:
+                card_list[3] = player_cards
+                game_list[i][2] = card_list
+                result_string = "\n"
+                for user1 in users:
+                    user_index = theGame[1].index(user1)
+                    result_string += user1 + "\n1   2   3   \n" + player_cards[user_index*6] + " " + player_cards[user_index*6 + 1] + " " + player_cards[user_index*6+2] 
+                    result_string = result_string + "\n4   5   6   \n" + player_cards[user_index*6 +3] + " " + player_cards[user_index*6 + 4] + " " + player_cards[user_index*6 + 5] + "\n"
+                result_string += "Discard: " + discard + " Top: **\n"
+                print(result_string)
                 calculate(game_identifier)
                 
 
@@ -341,15 +413,15 @@ def calculate(game_identifier):
                 if card[0] == "1":
                     card_name = 10
                 elif card[0] == "J":
-                    card_name == 11 
+                    card_name = 11 
                 elif card[0] == "Q":
-                    card_name == 12
+                    card_name = 12
                 elif card[0] == "K":
-                    card_name == 13
+                    card_name = 13
                 elif card[0] == "A":
-                    card_name == 1
+                    card_name = 1
                 else:
-                    card_name == int(card[0])
+                    card_name = int(card[0])
                 cards_list.append(card_name)
             
             if (cards_list[0] == cards_list[3]):
@@ -385,6 +457,26 @@ def calculate(game_identifier):
         min_index = scores.index(min_score)
         result_string += users[min_index] + " wins!"
         print(result_string)
+
+def endGame(game_identifier, user):
+    msg = ''
+    if game_identifier in identifier_list:
+        i = identifier_list.index(game_identifier)
+        theGame = game_list[i]
+        if user in theGame[1]:
+            calculate(game_identifier)
+            identifier_list.pop(i)
+            game_list.pop(i)
+            msg = "\nSUCCESS"
+        else:
+            msg = "\nFailure"
+    else:
+        msg = "\nFailure"    
+    UDPServerSocket.sendto(msg.encode(), clientAddress)
+        
+
+
+            
 
 msgFromServer = "Hello UDP Client"
 
@@ -436,7 +528,8 @@ while True:
         startGame(m[1], int(m[2]))
     elif m[0] == 'playgame':
         playGame(m[1], m[2], m[3], m[4])
-
+    elif m[0] == 'endgame':
+        endGame(m[1], m[2])
     else:
         msg = "please enter the correct command"
         print(m[0])
